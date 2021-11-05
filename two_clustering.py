@@ -100,13 +100,15 @@ if __name__=="__main__":
             fig = plt.figure() # initialise la figure
             line, = plt.plot([], [], ".") 
             plt.title(instance_filename)
+            plt.xlabel("sigma node")
+            plt.ylabel("Frequency")
             plt.xlim(xmin, xmax)
             plt.ylim(-1, 3*len(sigma)/ring_size) 
             def init():
                 line.set_data([], [])
                 return line,
             def animate(i): 
-                line.set_data(range(ring_size), count(sigma[:10*i+1], ring_size))
+                line.set_data(range(ring_size), count(sigma[:ring_size//5*i+1], ring_size))
                 return line,
 
 
@@ -130,7 +132,7 @@ if __name__=="__main__":
 
             best_cost = min(best_cost, online_cost)
 
-            ani = animation.FuncAnimation(fig, animate, init_func=init, frames=len(sigma)//10, blit=True, interval=0, repeat=False)
+            ani = animation.FuncAnimation(fig, animate, init_func=init, frames=len(sigma)*5//ring_size, blit=True, interval=0, repeat=False)
             plt.show()
 
         scores.append(best_cost)
