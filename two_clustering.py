@@ -1,10 +1,12 @@
 import sys, os, time
 from statistics import mean
+from random import randint
+import matplotlib.pyplot as plt
 
 # variable globale qui peut servir à stocker des informations d'un appel à l'autre si besoin
 global_state = {} 
 
-def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, first_call):
+def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, first_call, f=[0]):
     """
         A Faire:         
         - Ecrire une fonction qui retourne la nouvelle coupe
@@ -28,11 +30,11 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
     global global_state 
 
     # initialiser la variable globale lors du premier appel
+    global_state = {}
     if first_call:
-        global_state = {}
+        f[0] = randint(0,min(ring_size,30))
 
-
-    return current_cut # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
+    return f[0] # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
 
 ##############################################################
 #### LISEZ LE README et NE PAS MODIFIER LE CODE SUIVANT ####
@@ -96,4 +98,11 @@ if __name__=="__main__":
     output_file.write('score total: ' + str(sum(scores)))
 
     output_file.close()
+
+    # ---------------------------------------------------------------------------- #
+    #                                  Added stuff                                 #
+    # ---------------------------------------------------------------------------- #
+    for i,s in enumerate(scores):
+        print("\t ", i,"=>", s)
+    print("Totale score :",sum(scores))
 

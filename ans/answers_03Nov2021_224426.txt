@@ -1,0 +1,16 @@
+instance0_M4096_N512.inst: score: 20
+instance10_M65536_N512.inst: score: 278
+instance11_M65536_N512.inst: score: 84
+instance12_M65536_N512.inst: score: 258
+instance13_M1024_N128.inst: score: 12
+instance14_M65536_N512.inst: score: 140
+instance1_M4096_N16.inst: score: 512
+instance2_M1024_N16.inst: score: 121
+instance3_M65536_N64.inst: score: 2035
+instance4_M65536_N128.inst: score: 1055
+instance5_M65536_N512.inst: score: 245
+instance6_M65536_N512.inst: score: 8
+instance7_M65536_N512.inst: score: 10
+instance8_M65536_N512.inst: score: 256
+instance9_M65536_N512.inst: score: 4
+score total: 5038
