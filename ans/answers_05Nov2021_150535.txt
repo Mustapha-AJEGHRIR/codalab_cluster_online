@@ -1,0 +1,3 @@
+instance0_M4096_N512.inst: score: 96
+instance10_M65536_N512.inst: score: 326
+instance11_M65536_N512.inst: score: 88

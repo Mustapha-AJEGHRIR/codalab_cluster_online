@@ -1,0 +1,1 @@
+instance0_M4096_N512.inst: score: 124

@@ -2,6 +2,17 @@ import sys, os, time
 from statistics import mean
 from random import randint
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import numpy as np
+
+
+
+
+
+
+
+
+
 
 # variable globale qui peut servir à stocker des informations d'un appel à l'autre si besoin
 global_state = {} 
@@ -36,6 +47,14 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
 
     return f[0] # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
 
+
+def count(sigma, ring_size):
+    counts= [0]*ring_size
+    for i in sigma :
+        counts[i] += 1
+    return counts
+
+
 ##############################################################
 #### LISEZ LE README et NE PAS MODIFIER LE CODE SUIVANT ####
 ##############################################################
@@ -69,9 +88,30 @@ if __name__=="__main__":
         sigma = [int(d) for d in lines[7].split()]
                 
         # lancement de l'algo online 10 fois et calcul du meilleur cout
-        nb_runs = 10
+        nb_runs = 1
         best_cost = float('inf')
         for _ in range(nb_runs):
+            # ---------------------------------------------------------------------------- #
+            #                                 For annalysis                                #
+            # ---------------------------------------------------------------------------- #
+            xmin = 0
+            xmax = ring_size
+
+            fig = plt.figure() # initialise la figure
+            line, = plt.plot([], [], ".") 
+            plt.title(instance_filename)
+            plt.xlim(xmin, xmax)
+            plt.ylim(-1, 3*len(sigma)/ring_size) 
+            def init():
+                line.set_data([], [])
+                return line,
+            def animate(i): 
+                line.set_data(range(ring_size), count(sigma[:10*i+1], ring_size))
+                return line,
+
+
+
+
             online_cost = 0
             current_cut = 0
             first_call = True
@@ -90,8 +130,11 @@ if __name__=="__main__":
 
             best_cost = min(best_cost, online_cost)
 
-        scores.append(best_cost)
+            ani = animation.FuncAnimation(fig, animate, init_func=init, frames=len(sigma)//10, blit=True, interval=0, repeat=False)
+            plt.show()
 
+        scores.append(best_cost)
+        
         # ajout au rapport
         output_file.write(instance_filename + ': score: {}\n'.format(best_cost))
 
