@@ -4,9 +4,9 @@ from random import randint
 import matplotlib.pyplot as plt
 
 # variable globale qui peut servir à stocker des informations d'un appel à l'autre si besoin
-global_state = {} 
+global_state = {"call":0, "cut":0} 
 
-def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, first_call, f=[0]):
+def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, first_call):
     """
         A Faire:         
         - Ecrire une fonction qui retourne la nouvelle coupe
@@ -30,11 +30,24 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
     global global_state 
 
     # initialiser la variable globale lors du premier appel
-    global_state = {}
     if first_call:
-        f[0] = randint(0,min(ring_size,30))
+        global_state["call"] += 1
+        global_state["cut"] = randint(0,min(ring_size,3))
+        
+    
+        if global_state["call"]>2:
+            global_state["cut"] = randint(0,min(ring_size,5))
+        if global_state["call"]>4:
+            global_state["cut"] = randint(5,min(ring_size,15))
+        if global_state["call"]>6 and ring_size > 16:
+            global_state["cut"] = randint(15,min(ring_size,60))
+        if global_state["call"]>9 and ring_size > 50:
+            global_state["cut"] = randint(50,min(ring_size,100))
 
-    return f[0] # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
+
+
+
+    return global_state["cut"] # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
 
 ##############################################################
 #### LISEZ LE README et NE PAS MODIFIER LE CODE SUIVANT ####
@@ -89,11 +102,12 @@ if __name__=="__main__":
                 first_call = False
 
             best_cost = min(best_cost, online_cost)
-
+        global_state["call"] = 0 #Added
         scores.append(best_cost)
 
         # ajout au rapport
         output_file.write(instance_filename + ': score: {}\n'.format(best_cost))
+        # print("score :", instance_filename," = ", best_cost) #Added
 
     output_file.write('score total: ' + str(sum(scores)))
 
