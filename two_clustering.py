@@ -1,10 +1,31 @@
 import sys, os, time
 from statistics import mean
 from random import randint
-import matplotlib.pyplot as plt
+import numpy as np
+
+NB_RUNS = 10
 
 # variable globale qui peut servir à stocker des informations d'un appel à l'autre si besoin
-global_state = {"call":0, "cut":0} 
+global_state = {"call_index":-1, "answers":[0,1,-1,5,10,14,19,25,30,35], "sigma":[], "best_cut": 0} 
+
+def get_answer(global_state, ring_size):
+    return global_state["answers"][global_state["call_index"]]%ring_size
+
+def offline(global_state, ring_size, alpha):
+    # TODO
+    sigma = global_state["sigma"]
+    freq = [0]*ring_size
+    for msg in sigma:
+        freq[msg] += 1
+    costs = np.array(freq)
+    costs = costs + np.concatenate((costs[ring_size//2:], costs[:ring_size//2]))
+
+    for i, c in enumerate(costs):
+        index = i % (ring_size//2)
+        costs[i] += 2*alpha*min(index-0, 0+(ring_size//2)-index)
+    
+    global_state["best_cut"] = np.argmin(costs)
+    return global_state
 
 def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, first_call):
     """
@@ -29,25 +50,27 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
     # utiliser la variable globale
     global global_state 
 
-    # initialiser la variable globale lors du premier appel
     if first_call:
-        global_state["call"] += 1
-        global_state["cut"] = randint(0,min(ring_size,3))
-        
+        global_state["call_index"] += 1
+        global_state["call_index"] %= NB_RUNS
+
+        if global_state["call_index"] == 0 : #Init sigma
+            global_state["sigma"] = []
+        if global_state["call_index"] == 9:
+            global_state = offline(global_state, ring_size, alpha)
     
-        if global_state["call"]>2:
-            global_state["cut"] = randint(0,min(ring_size,5))
-        if global_state["call"]>4:
-            global_state["cut"] = randint(5,min(ring_size,15))
-        if global_state["call"]>6 and ring_size > 16:
-            global_state["cut"] = randint(15,min(ring_size,60))
-        if global_state["call"]>9 and ring_size > 50:
-            global_state["cut"] = randint(50,min(ring_size,100))
+    if global_state["call_index"] == 0 : #fill sigma
+        global_state["sigma"].append(new_msg)
+
+    if global_state["call_index"] == 9:
+        return global_state["best_cut"]
+    
+    return get_answer(global_state, ring_size) # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
 
 
 
 
-    return global_state["cut"] # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
+
 
 ##############################################################
 #### LISEZ LE README et NE PAS MODIFIER LE CODE SUIVANT ####
@@ -102,7 +125,7 @@ if __name__=="__main__":
                 first_call = False
 
             best_cost = min(best_cost, online_cost)
-        global_state["call"] = 0 #Added
+        # global_state["call_index"] = 0 #Added
         scores.append(best_cost)
 
         # ajout au rapport
