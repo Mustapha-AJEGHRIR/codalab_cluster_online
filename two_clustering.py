@@ -37,12 +37,12 @@ def online_partial_utils(ring_size, alpha, sigma, current_cut):
         index = i % (ring_size//2)
         if current_cut < index:
             if min(index-current_cut, current_cut+(ring_size//2)-index) <= nb_neighbors:
-                costs[i] += 2*alpha*min(index-current_cut, current_cut+(ring_size//2)-index)*ADDITIONAL_PENALITY
+                costs[i] += 2*alpha*min(index-current_cut, current_cut+(ring_size//2)-index)*(randint(1,2))
             else :
                 costs[i] +=  alpha*ring_size*len(global_state["sigma"])*ring_size*10000 #infinity
         if current_cut > index:
             if min(current_cut-index, index+(ring_size//2)-current_cut) <= nb_neighbors:
-                costs[i] += 2*alpha*min(current_cut-index, index+(ring_size//2)-current_cut)*ADDITIONAL_PENALITY
+                costs[i] += 2*alpha*min(current_cut-index, index+(ring_size//2)-current_cut)*(randint(1,2))
             else :
                 costs[i] +=  alpha*ring_size*len(global_state["sigma"])*ring_size*10000 #infinity
 
