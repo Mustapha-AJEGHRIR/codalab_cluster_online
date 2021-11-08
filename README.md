@@ -4,9 +4,9 @@
 Ce code résoud le problem de `Competitive clustering of stochastic communication patterns on a ring`. Les algorithmes utilisés ne sont en aucun cas optimaux
 ## Composition:
 3 branches :
-	* `analysis` est une branche pour analyser les données.
-	* `master` contient un algo non optimale.
-	* `online` qui contient un algo online non optimale.
+- `analysis` est une branche pour analyser les données.
+- `master` contient un algo non optimale.
+- `online` qui contient un algo online non optimale.
 
 # Consignes:
 - Ne modifiez pas et n'effacez pas le fichier 'metadata'. Gardez-le dans l'archive de votre soumission.
