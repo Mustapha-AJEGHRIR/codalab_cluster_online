@@ -37,12 +37,12 @@ def online_partial_utils(ring_size, alpha, sigma, current_cut):
         index = i % (ring_size//2)
         if current_cut < index:
             if min(index-current_cut, current_cut+(ring_size//2)-index) <= nb_neighbors:
-                costs[i] += 2*alpha*min(index-current_cut, current_cut+(ring_size//2)-index)*(randint(1,2))
+                costs[i] += 2*alpha*min(index-current_cut, current_cut+(ring_size//2)-index)*ADDITIONAL_PENALITY
             else :
                 costs[i] +=  alpha*ring_size*len(global_state["sigma"])*ring_size*10000 #infinity
         if current_cut > index:
             if min(current_cut-index, index+(ring_size//2)-current_cut) <= nb_neighbors:
-                costs[i] += 2*alpha*min(current_cut-index, index+(ring_size//2)-current_cut)*(randint(1,2))
+                costs[i] += 2*alpha*min(current_cut-index, index+(ring_size//2)-current_cut)*ADDITIONAL_PENALITY
             else :
                 costs[i] +=  alpha*ring_size*len(global_state["sigma"])*ring_size*10000 #infinity
 
@@ -69,7 +69,11 @@ def online_partial(global_state, ring_size, alpha, current_cut=0, n_cuts = 5, ta
     return global_state
 
 
-
+def build_frec(sigma, ring_size):
+    frec = [0]*ring_size
+    for msg in sigma:
+        frec[msg] += 1
+    return frec
 def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, first_call):
     """
         A Faire:         
@@ -98,21 +102,30 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
     if first_call:
         global_state["call"] = 0
         global_state["sigma"] = []
-        index = randint(0, 2)
-        # global_state["cut"] = global_state["possible_vals"][index]
-        global_state["cut"] = -1
-        global_state["PERIOD"] = PERIOD
-        global_state["PERIOD_AUGMENTATION"] = randint(12,30)/10
-        # global_state["PERIOD_AUGMENTATION"] = PERIOD_AUGMENTATION
+        # index = randint(0, 2)
+        # # global_state["cut"] = global_state["possible_vals"][index]
+        global_state["cut"] = format_me(-1, ring_size)
+        # global_state["frec"] = [0]*ring_size
 
 
     global_state["sigma"].append(new_msg)
+    # global_state["frec"][new_msg] += 1
 
-    if (global_state["call"]+1) % (ring_size*global_state["PERIOD"]) == 0:
-        global_state["PERIOD"] *= global_state["PERIOD_AUGMENTATION"]
-        global_state = online_partial(global_state, ring_size, alpha, current_cut=current_cut, n_cuts=1, take_only=-1)
-        global_state["cut"] = global_state["partial_best"][-1]
+    if (global_state["call"]) % (2000) == 50:
+        # costs = np.array(global_state["frec"])
+        frec = build_frec(global_state["sigma"][-2000:], ring_size)
+        costs = np.array(frec)
+        costs = costs + np.concatenate((costs[ring_size//2:], costs[:ring_size//2]))
 
+        #go left
+        if costs[format_me(current_cut-1, ring_size)] + 2*alpha < costs[format_me(current_cut, ring_size)]:
+            if randint(0,10)>8:
+                global_state["cut"] = format_me(current_cut-1, ring_size)
+        #go right
+        if costs[format_me(current_cut+1, ring_size)] + 2*alpha < costs[format_me(current_cut, ring_size)]:
+            if randint(0,10)>8:
+                global_state["cut"] = format_me(current_cut+1, ring_size)
+        
     return format_me(global_state["cut"], ring_size) # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
 
 
