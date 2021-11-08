@@ -107,27 +107,26 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
         global_state["cut"] = format_me(-1, ring_size)
         # global_state["frec"] = [0]*ring_size
         global_state["period"] = randint(1,40)*100
-
+        global_state["algo"] = randint(0,4)
 
     global_state["sigma"].append(new_msg)
-    # global_state["frec"][new_msg] += 1
-    period = global_state["period"]
-    if (global_state["call"]) % (period) == 50:
-        # costs = np.array(global_state["frec"])
-        frec = build_frec(global_state["sigma"][-period:], ring_size)
-        costs = np.array(frec)
+    if global_state["algo"] >=1:
+        period = global_state["period"]
+        if (global_state["call"]) % (period) == 50:
+            frec = build_frec(global_state["sigma"][-period:], ring_size)
+            costs = np.array(frec)
 
-        costs = costs + np.concatenate((costs[ring_size//2:], costs[:ring_size//2]))
+            costs = costs + np.concatenate((costs[ring_size//2:], costs[:ring_size//2]))
 
-        #go left
-        if costs[format_me(current_cut-1, ring_size)] + 2*alpha < costs[format_me(current_cut, ring_size)]:
-            if randint(0,10)>8:
-                global_state["cut"] = format_me(current_cut-1, ring_size)
-        #go right
-        if costs[format_me(current_cut+1, ring_size)] + 2*alpha < costs[format_me(current_cut, ring_size)]:
-            if randint(0,10)>8:
-                global_state["cut"] = format_me(current_cut+1, ring_size)
-        
+            #go left
+            if costs[format_me(current_cut-1, ring_size)] + 2*alpha < costs[format_me(current_cut, ring_size)]:
+                if randint(0,10)>8:
+                    global_state["cut"] = format_me(current_cut-1, ring_size)
+            #go right
+            if costs[format_me(current_cut+1, ring_size)] + 2*alpha < costs[format_me(current_cut, ring_size)]:
+                if randint(0,10)>8:
+                    global_state["cut"] = format_me(current_cut+1, ring_size)
+
     return format_me(global_state["cut"], ring_size) # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
 
 
