@@ -2,10 +2,11 @@ import sys, os, time
 from statistics import mean
 from random import randint
 import numpy as np
+from numpy.core.fromnumeric import take
 
 NB_RUNS = 10
 PERIOD = 2
-PERIOD_AUGMENTATION = 2.5
+PERIOD_AUGMENTATION = 2
 ADDITIONAL_PENALITY = 1
 
 # variable globale qui peut servir à stocker des informations d'un appel à l'autre si besoin
@@ -27,7 +28,7 @@ def online_partial_utils(ring_size, alpha, sigma, current_cut):
 
     nb_neighbors = 1
     rounds = len(global_state["sigma"])/(ring_size*PERIOD)
-    # if rounds > 5:
+    # if rounds > 30:
     #     nb_neighbors = 2
 
 
@@ -48,8 +49,11 @@ def online_partial_utils(ring_size, alpha, sigma, current_cut):
     # print(costs)
     return np.argmin(costs)
 
-def online_partial(global_state, ring_size, alpha, current_cut=0, n_cuts = 5):
-    sigma = global_state["sigma"]
+def online_partial(global_state, ring_size, alpha, current_cut=0, n_cuts = 5, take_only=-1):
+    if take_only <0:
+        sigma = global_state["sigma"]
+    else:
+        sigma = global_state["sigma"][-take_only:]
     sigma_len = len(sigma)
     sigma_cuts = []
     for c in range(n_cuts):
@@ -99,13 +103,14 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
         global_state["cut"] = -1
         global_state["PERIOD"] = PERIOD
         global_state["PERIOD_AUGMENTATION"] = randint(12,30)/10
-        print(global_state["PERIOD_AUGMENTATION"])
+        # global_state["PERIOD_AUGMENTATION"] = PERIOD_AUGMENTATION
+
 
     global_state["sigma"].append(new_msg)
 
     if (global_state["call"]+1) % (ring_size*global_state["PERIOD"]) == 0:
         global_state["PERIOD"] *= global_state["PERIOD_AUGMENTATION"]
-        global_state = online_partial(global_state, ring_size, alpha, current_cut=global_state["cut"], n_cuts=1)
+        global_state = online_partial(global_state, ring_size, alpha, current_cut=current_cut, n_cuts=1, take_only=-1)
         global_state["cut"] = global_state["partial_best"][-1]
 
     return format_me(global_state["cut"], ring_size) # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
