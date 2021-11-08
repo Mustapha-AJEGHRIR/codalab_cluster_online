@@ -115,6 +115,7 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
         # costs = np.array(global_state["frec"])
         frec = build_frec(global_state["sigma"][-2000:], ring_size)
         costs = np.array(frec)
+        
         costs = costs + np.concatenate((costs[ring_size//2:], costs[:ring_size//2]))
 
         #go left
