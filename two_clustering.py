@@ -110,6 +110,8 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
         global_state["period_coef"] = randint(1,3)
         global_state["algo"] = randint(0,4)
         global_state["limite"] = randint(77,83)
+        global_state["PERIOD"] = PERIOD
+        global_state["PERIOD_AUGMENTATION"] = randint(12,30)/10
 
     global_state["sigma"].append(new_msg)
 
