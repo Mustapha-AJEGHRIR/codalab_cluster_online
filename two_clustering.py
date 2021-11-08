@@ -1,70 +1,16 @@
 import sys, os, time
 from statistics import mean
 from random import randint
-import numpy as np
-
-NB_RUNS = 10
-N_CUTS = 10
 
 # variable globale qui peut servir à stocker des informations d'un appel à l'autre si besoin
-global_state = {"call_index":-1, "answers":[0,13,1,10,5,10,14,19,25,30], "sigma":[], "best_cut": 0, "partial_cuts" : 5, "partial_best" : [], "msg_num":0} 
-
-def get_answer(global_state, ring_size):
-    return global_state["answers"][global_state["call_index"]]%ring_size
-
-def offline_partial_utils(ring_size, alpha, sigma, current_cut):
-    freq = [0]*ring_size
-    for msg in sigma:
-        freq[msg] += 1
-    costs = np.array(freq)
-    costs = costs + np.concatenate((costs[ring_size//2:], costs[:ring_size//2]))
-
-    for i, c in enumerate(costs):
-        index = i % (ring_size//2)
-
-        if current_cut < index:
-            costs[i] += 2*alpha*min(index-current_cut, current_cut+(ring_size//2)-index)
-        if current_cut > index:
-            costs[i] += 2*alpha*min(current_cut-index, index+(ring_size//2)-current_cut)
-    # print(costs)
-    return np.argmin(costs)
-
-def offline_partial(global_state, ring_size, alpha, n_cuts = 5):
-    sigma = global_state["sigma"]
-    sigma_len = len(sigma)
-    sigma_cuts = []
-    for c in range(n_cuts):
-        sigma_cuts.append(sigma[sigma_len*c//n_cuts:sigma_len*(c+1)//n_cuts])
-    cuts = []
-    best_cut = 0
-    for cut in sigma_cuts:
-        best_cut= offline_partial_utils(ring_size, alpha, cut, best_cut)
-        cuts.append(best_cut)
-    
-    global_state["partial_cuts"] = n_cuts
-    global_state["partial_best"] = cuts
-    return global_state
-
-def offline(global_state, ring_size, alpha):
-    # TODO
-    sigma = global_state["sigma"]
-    freq = [0]*ring_size
-    for msg in sigma:
-        freq[msg] += 1
-    costs = np.array(freq)
-    costs = costs + np.concatenate((costs[ring_size//2:], costs[:ring_size//2]))
-
-    for i, c in enumerate(costs):
-        index = i % (ring_size//2)
-        costs[i] += 2*alpha*min(index-0, 0+(ring_size//2)-index)
-    
-    global_state["best_cut"] = np.argmin(costs)
-    return global_state
+global_state = {"call":-1, "cut":0, "possible_vals": [-1,1,-1]} 
 
 def format_me(val, ring_size):
     if val < 0:
         return int(ring_size+val) 
     return int(val)
+
+
 
 def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, first_call):
     """
@@ -89,67 +35,14 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
     # utiliser la variable globale
     global global_state 
 
-    global_state["msg_num"] +=1
+    # initialiser la variable globale lors du premier appel
+    global_state["call"] += 1
     if first_call:
-        global_state["msg_num"] = 0
-        global_state["call_index"] += 1
-        global_state["call_index"] %= NB_RUNS
+        global_state["call"] = 0
+        index = randint(0, 2)
+        global_state["cut"] = global_state["possible_vals"][index]
 
-        if global_state["call_index"] == 0 : #Init sigma
-            global_state["sigma"] = []
-        # if global_state["call_index"] == 1:
-        #     global_state = offline(global_state, ring_size, alpha)
-        if global_state["call_index"] == 2:
-            global_state = offline_partial(global_state, ring_size, alpha, n_cuts=1)
-        if global_state["call_index"] == 3:
-            global_state = offline_partial(global_state, ring_size, alpha, n_cuts=3)
-        if global_state["call_index"] == 4:
-            global_state = offline_partial(global_state, ring_size, alpha, n_cuts=6)
-        if global_state["call_index"] == 5:
-            global_state = offline_partial(global_state, ring_size, alpha, n_cuts=10)
-        if global_state["call_index"] == 6:
-            global_state = offline_partial(global_state, ring_size, alpha, n_cuts=20)
-        if global_state["call_index"] == 7:
-            global_state = offline_partial(global_state, ring_size, alpha, n_cuts=50)
-        if global_state["call_index"] == 8:
-            global_state = offline_partial(global_state, ring_size, alpha, n_cuts=100)
-    
-    if global_state["call_index"] == 0 : #fill sigma
-        global_state["sigma"].append(new_msg)
-
-    # if global_state["call_index"] == 1:
-    #     return format_me(global_state["best_cut"], ring_size)
-    if global_state["call_index"] == 2:
-        sigma_len = len(global_state["sigma"])
-        index = int((global_state["msg_num"]/sigma_len)*1)
-        return format_me(global_state["partial_best"][index] ,ring_size)
-    if global_state["call_index"] == 3:
-        sigma_len = len(global_state["sigma"])
-        index = int((global_state["msg_num"]/sigma_len)*3)
-        return format_me(global_state["partial_best"][index] ,ring_size)
-    if global_state["call_index"] == 4:
-        sigma_len = len(global_state["sigma"])
-        index = int((global_state["msg_num"]/sigma_len)*6)
-        return format_me(global_state["partial_best"][index] ,ring_size)
-    if global_state["call_index"] == 5:
-        sigma_len = len(global_state["sigma"])
-        index = int((global_state["msg_num"]/sigma_len)*10)
-        return format_me(global_state["partial_best"][index] ,ring_size)
-    if global_state["call_index"] == 6:
-        sigma_len = len(global_state["sigma"])
-        index = int((global_state["msg_num"]/sigma_len)*20)
-        return format_me(global_state["partial_best"][index] ,ring_size)
-    if global_state["call_index"] == 7:
-        sigma_len = len(global_state["sigma"])
-        index = int((global_state["msg_num"]/sigma_len)*50)
-        return format_me(global_state["partial_best"][index] ,ring_size)
-    if global_state["call_index"] == 8:
-        sigma_len = len(global_state["sigma"])
-        index = int((global_state["msg_num"]/sigma_len)*100)
-        return format_me(global_state["partial_best"][index] ,ring_size)
-
-    
-    return format_me(get_answer(global_state, ring_size), ring_size) # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
+    return format_me(global_state["cut"], ring_size) # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
 
 
 
@@ -178,8 +71,6 @@ if __name__=="__main__":
     output_file = open(os.path.join(output_dir, output_filename), 'w')
 
     scores = []
-    # test_score = [] #Added
-
     
     for instance_filename in sorted(os.listdir(input_dir)):
         # importer l'instance depuis le fichier (attention code non robuste)
@@ -191,9 +82,9 @@ if __name__=="__main__":
         sigma = [int(d) for d in lines[7].split()]
                 
         # lancement de l'algo online 10 fois et calcul du meilleur cout
-        nb_runs = NB_RUNS
+        nb_runs = 1
         best_cost = float('inf')
-        for i in range(nb_runs):
+        for _ in range(nb_runs):
             online_cost = 0
             current_cut = 0
             first_call = True
@@ -209,10 +100,9 @@ if __name__=="__main__":
                     online_cost += 1
 
                 first_call = False
-            # if i==3: #Added
-            #     test_score.append(online_cost) #Added
+
             best_cost = min(best_cost, online_cost)
-        # global_state["call_index"] = 0 #Added
+        global_state["call"] = 0 #Added
         scores.append(best_cost)
 
         # ajout au rapport
@@ -229,5 +119,4 @@ if __name__=="__main__":
     for i,s in enumerate(scores):
         print("\t ", i,"=>", s)
     print("Totale score :",sum(scores))
-    # print("test_score :", sum(test_score))
 
