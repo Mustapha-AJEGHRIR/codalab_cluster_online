@@ -102,9 +102,10 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
     if first_call:
         global_state["call"] = 0
         global_state["sigma"] = []
-        # index = randint(0, 2)
+        index = randint(0, 1)
         # # global_state["cut"] = global_state["possible_vals"][index]
-        global_state["cut"] = format_me(-1, ring_size)
+        posiibilities = [-1,255]
+        global_state["cut"] = format_me(posiibilities[index], ring_size)
         # global_state["frec"] = [0]*ring_size
         global_state["period"] = randint(1,40)*100
         global_state["algo"] = randint(0,4)
