@@ -7,7 +7,7 @@ from numpy.core.fromnumeric import take
 NB_RUNS = 10
 PERIOD = 2
 PERIOD_AUGMENTATION = 2
-ADDITIONAL_PENALITY = 1
+ADDITIONAL_PENALITY = 2
 
 # variable globale qui peut servir à stocker des informations d'un appel à l'autre si besoin
 global_state = {"call":-1, "cut":0, "possible_vals": [-1,1,-1], "sigma": [], "partial_best":[], "PERIOD":PERIOD, "PERIOD_AUGMENTATION":PERIOD_AUGMENTATION} 
@@ -106,15 +106,17 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
         # # global_state["cut"] = global_state["possible_vals"][index]
         global_state["cut"] = format_me(-1, ring_size)
         # global_state["frec"] = [0]*ring_size
-        global_state["period"] = randint(5,30)*100
+        global_state["period"] = ring_size*randint(20,70)//10
+        global_state["period_coef"] = randint(1,3)
 
 
     global_state["sigma"].append(new_msg)
     # global_state["frec"][new_msg] += 1
     period = global_state["period"]
+    period_coef = global_state["period_coef"]
     if (global_state["call"]) % (period) == 50:
         # costs = np.array(global_state["frec"])
-        frec = build_frec(global_state["sigma"][-period*3:], ring_size)
+        frec = build_frec(global_state["sigma"][-period//period_coef:], ring_size)
         costs = np.array(frec)
 
         costs = costs + np.concatenate((costs[ring_size//2:], costs[:ring_size//2]))
@@ -123,10 +125,18 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
         if costs[format_me(current_cut-1, ring_size)] + 2*alpha < costs[format_me(current_cut, ring_size)]:
             if randint(0,10)>8:
                 global_state["cut"] = format_me(current_cut-1, ring_size)
+        #go far left
+        if costs[format_me(current_cut-2, ring_size)] + ADDITIONAL_PENALITY*2*2*alpha < costs[format_me(current_cut, ring_size)]:
+            if randint(0,100)>980:
+                global_state["cut"] = format_me(current_cut-2, ring_size)
         #go right
         if costs[format_me(current_cut+1, ring_size)] + 2*alpha < costs[format_me(current_cut, ring_size)]:
             if randint(0,10)>8:
                 global_state["cut"] = format_me(current_cut+1, ring_size)
+        #go far right
+        if costs[format_me(current_cut+2, ring_size)] + ADDITIONAL_PENALITY*2*2*alpha < costs[format_me(current_cut, ring_size)]:
+            if randint(0,100)>980:
+                global_state["cut"] = format_me(current_cut+2, ring_size)
         
     return format_me(global_state["cut"], ring_size) # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
 
