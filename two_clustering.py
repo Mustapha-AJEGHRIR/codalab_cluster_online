@@ -1,14 +1,68 @@
 import sys, os, time
 from statistics import mean
 from random import randint
+import numpy as np
+
+NB_RUNS = 10
+PERIOD = 2
+PERIOD_AUGMENTATION = 2.5
+ADDITIONAL_PENALITY = 1
 
 # variable globale qui peut servir à stocker des informations d'un appel à l'autre si besoin
-global_state = {"call":-1, "cut":0, "possible_vals": [-1,1,-1]} 
+global_state = {"call":-1, "cut":0, "possible_vals": [-1,1,-1], "sigma": [], "partial_best":[], "PERIOD":PERIOD, "PERIOD_AUGMENTATION":PERIOD_AUGMENTATION} 
+
+
 
 def format_me(val, ring_size):
     if val < 0:
         return int(ring_size+val) 
     return int(val)
+
+def online_partial_utils(ring_size, alpha, sigma, current_cut):
+    freq = [0]*ring_size
+    for msg in sigma:
+        freq[msg] += 1
+    costs = np.array(freq)
+    costs = costs + np.concatenate((costs[ring_size//2:], costs[:ring_size//2]))
+
+    nb_neighbors = 1
+    rounds = len(global_state["sigma"])/(ring_size*PERIOD)
+    # if rounds > 5:
+    #     nb_neighbors = 2
+
+
+
+    for i, c in enumerate(costs):
+        index = i % (ring_size//2)
+        if current_cut < index:
+            if min(index-current_cut, current_cut+(ring_size//2)-index) <= nb_neighbors:
+                costs[i] += 2*alpha*min(index-current_cut, current_cut+(ring_size//2)-index)*ADDITIONAL_PENALITY
+            else :
+                costs[i] +=  alpha*ring_size*len(global_state["sigma"])*ring_size*10000 #infinity
+        if current_cut > index:
+            if min(current_cut-index, index+(ring_size//2)-current_cut) <= nb_neighbors:
+                costs[i] += 2*alpha*min(current_cut-index, index+(ring_size//2)-current_cut)*ADDITIONAL_PENALITY
+            else :
+                costs[i] +=  alpha*ring_size*len(global_state["sigma"])*ring_size*10000 #infinity
+
+    # print(costs)
+    return np.argmin(costs)
+
+def online_partial(global_state, ring_size, alpha, current_cut=0, n_cuts = 5):
+    sigma = global_state["sigma"]
+    sigma_len = len(sigma)
+    sigma_cuts = []
+    for c in range(n_cuts):
+        sigma_cuts.append(sigma[sigma_len*c//n_cuts:sigma_len*(c+1)//n_cuts])
+    cuts = []
+    best_cut = current_cut
+    for cut in sigma_cuts:
+        best_cut= online_partial_utils(ring_size, alpha, cut, best_cut)
+        cuts.append(best_cut)
+    
+    global_state["partial_cuts"] = n_cuts
+    global_state["partial_best"] = cuts
+    return global_state
 
 
 
@@ -39,8 +93,20 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
     global_state["call"] += 1
     if first_call:
         global_state["call"] = 0
+        global_state["sigma"] = []
         index = randint(0, 2)
-        global_state["cut"] = global_state["possible_vals"][index]
+        # global_state["cut"] = global_state["possible_vals"][index]
+        global_state["cut"] = -1
+        global_state["PERIOD"] = PERIOD
+        global_state["PERIOD_AUGMENTATION"] = randint(12,30)/10
+        print(global_state["PERIOD_AUGMENTATION"])
+
+    global_state["sigma"].append(new_msg)
+
+    if (global_state["call"]+1) % (ring_size*global_state["PERIOD"]) == 0:
+        global_state["PERIOD"] *= global_state["PERIOD_AUGMENTATION"]
+        global_state = online_partial(global_state, ring_size, alpha, current_cut=global_state["cut"], n_cuts=1)
+        global_state["cut"] = global_state["partial_best"][-1]
 
     return format_me(global_state["cut"], ring_size) # la coupe/2-clusters courante est conservée, ceci n'est pas une solution optimale
 
@@ -82,7 +148,7 @@ if __name__=="__main__":
         sigma = [int(d) for d in lines[7].split()]
                 
         # lancement de l'algo online 10 fois et calcul du meilleur cout
-        nb_runs = 1
+        nb_runs = NB_RUNS
         best_cost = float('inf')
         for _ in range(nb_runs):
             online_cost = 0
