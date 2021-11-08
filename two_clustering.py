@@ -107,13 +107,13 @@ def online_two_clustering(ring_size, alpha, current_cut, current_cost, new_msg, 
         posiibilities = [-1,255]
         global_state["cut"] = format_me(posiibilities[index], ring_size)
         # global_state["frec"] = [0]*ring_size
-        global_state["period"] = randint(1,40)*100
+        global_state["period"] = randint(2,40)*100
         global_state["algo"] = randint(0,4)
 
     global_state["sigma"].append(new_msg)
     if global_state["algo"] >=1:
         period = global_state["period"]
-        if (global_state["call"]) % (period) == 50:
+        if (global_state["call"]) % (period) == 100:
             frec = build_frec(global_state["sigma"][-period:], ring_size)
             costs = np.array(frec)
 
